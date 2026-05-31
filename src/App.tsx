@@ -11,9 +11,6 @@ export default function App() {
   const [teacherDeskPos, setTeacherDeskPos] = useState<string>('center');
   const [doorPos, setDoorPos] = useState<string>('left');
   const [rooms, setRooms] = useState<any[]>([{ name: "Ruang 1", seatData: {} }]);
-  
-  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-  const [activeRoomIdx, setActiveRoomIdx] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -57,7 +54,7 @@ export default function App() {
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const file = e.target.files ? e.target.files[0] : null;
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt: ProgressEvent<FileReader>) => {
@@ -66,7 +63,7 @@ export default function App() {
       const wb = XLSX.read(bstr, { type: 'binary' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      const participantData = data.slice(1).filter(row => row[0] !== undefined || row[1] !== undefined);
+      const participantData = data.slice(1).filter(row => row !== undefined);
       const orderedSeats = getOrderedSeats();
       const capacity = orderedSeats.length;
       const newRooms: any[] = [];
@@ -91,7 +88,7 @@ export default function App() {
     const index = orderedSeats.findIndex(s => s.r === r && s.c === c);
     return index !== -1 ? index + 1 : null;
   };
-  return (
+return (
     <div className="min-h-screen bg-gray-50 p-4 font-sans">
       <style type="text/css" media="print">
         {`
