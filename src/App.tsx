@@ -12,7 +12,6 @@ export default function App() {
   const [doorPos, setDoorPos] = useState<string>('left');
   const [rooms, setRooms] = useState<any[]>([{ name: "Ruang 1", seatData: {} }]);
   
-  // Mengabaikan pesan error TS6133 karena variabel sengaja disimpan untuk pengembangan ke depan
   /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
   const [activeRoomIdx, setActiveRoomIdx] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +91,6 @@ export default function App() {
     const index = orderedSeats.findIndex(s => s.r === r && s.c === c);
     return index !== -1 ? index + 1 : null;
   };
-
   return (
     <div className="min-h-screen bg-gray-50 p-4 font-sans">
       <style type="text/css" media="print">
@@ -115,7 +113,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content - Full width on screen, constrained on print */}
       <div className="w-full flex flex-col items-center">
         {rooms.map((room, roomIdx) => (
             <main key={roomIdx} className="w-full print:max-w-[210mm] print:mx-auto bg-white p-8 shadow-md border-4 border-gray-900 mb-12 page-break">
@@ -174,3 +171,32 @@ export default function App() {
         <label className="text-sm font-bold block mb-4 border-b pb-2">Konfigurasi Ruangan</label>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="flex flex-col gap-2">
+                <input className="p-2 border rounded" placeholder="Judul Baris 1" value={examTitle1} onChange={(e) => setExamTitle1(e.target.value)} />
+                <input className="p-2 border rounded" placeholder="Judul Baris 2" value={examTitle2} onChange={(e) => setExamTitle2(e.target.value)} />
+            </div>
+            <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                    <input className="w-full p-2 border rounded" type="number" value={rows} onChange={(e) => setRows(Number(e.target.value))} placeholder="Baris" />
+                    <input className="w-full p-2 border rounded" type="number" value={cols} onChange={(e) => setCols(Number(e.target.value))} placeholder="Kolom" />
+                </div>
+                <div className="flex gap-2">
+                    {['left', 'center', 'right'].map(pos => <button key={pos} onClick={() => setTeacherDeskPos(pos)} className={`capitalize flex-1 px-3 py-1 border rounded text-xs ${teacherDeskPos === pos ? 'bg-blue-600 text-white' : ''}`}>{pos}</button>)}
+                </div>
+            </div>
+            <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                    {['left', 'right'].map(pos => <button key={pos} onClick={() => setDoorPos(pos)} className={`capitalize flex-1 px-3 py-1 border rounded text-xs ${doorPos === pos ? 'bg-green-600 text-white' : ''}`}>Pintu {pos}</button>)}
+                </div>
+                <div className="flex gap-1 flex-wrap">
+                    <span className="text-[10px] w-full font-bold">Extra Meja Kolom:</span>
+                    {Array.from({length: cols}).map((_, i) => (
+                        <button key={i} onClick={() => setExtraSeats(p => ({...p, [i]: !p[i]}))} className={`px-2 py-1 border rounded text-[10px] ${extraSeats[i] ? 'bg-yellow-500 text-white' : 'bg-gray-100'}`}>{i+1}</button>
+                    ))}
+                </div>
+            </div>
+        </div>
+      </div>
+      <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" accept=".xlsx, .xls" />
+    </div>
+  );
+}
