@@ -1,16 +1,29 @@
 import * as XLSX from 'xlsx';
-import { useState, useRef } from 'react';
-import { LayoutGrid, Printer, Upload, Trash2 } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { LayoutGrid, Printer, DoorOpen, Upload, Trash2 } from 'lucide-react';
 
 export default function App() {
-  const [rows] = useState(5);
-  const [cols] = useState(5);
-  const [extraSeats] = useState<Record<number, boolean>>({});
-  const [examTitle1] = useState("UJIAN AKHIR SEMESTER");
-  const [examTitle2] = useState("TAHUN AJARAN 2026/2027");
-  const [doorPos] = useState('left');
+  const [rows, setRows] = useState<number>(5);
+  const [cols, setCols] = useState<number>(5);
+  const [extraSeats, setExtraSeats] = useState<Record<number, boolean>>({});
+  const [examTitle1, setExamTitle1] = useState<string>("UJIAN AKHIR SEMESTER");
+  const [examTitle2, setExamTitle2] = useState<string>("TAHUN AJARAN 2026/2027");
+  const [teacherDeskPos, setTeacherDeskPos] = useState<string>('center');
+  const [doorPos, setDoorPos] = useState<string>('left');
   const [rooms, setRooms] = useState<any[]>([{ name: "Ruang 1", seatData: {} }]);
+  
+  // Mengabaikan pesan error TS6133 karena variabel sengaja disimpan untuk pengembangan ke depan
+  /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
+  const [activeRoomIdx, setActiveRoomIdx] = useState<number>(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://sheetjs.com";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => { if (document.body.contains(script)) document.body.removeChild(script); };
+  }, []);
 
   const getOrderedSeats = () => {
     const order: {r: number, c: number}[] = [];
@@ -62,8 +75,10 @@ export default function App() {
         const chunk = participantData.slice(i, i + capacity);
         const seatData: Record<string, {name: string, id: string}> = {};
         chunk.forEach((row, index) => {
-          const { r, c } = orderedSeats[index];
-          seatData[`${r}-${c}`] = { name: String(row[0] || ""), id: String(row[1] || "") };
+          if (index < orderedSeats.length) {
+            const { r, c } = orderedSeats[index];
+            seatData[`${r}-${c}`] = { name: String(row[0] || ""), id: String(row[1] || "") };
+          }
         });
         newRooms.push({ name: `Ruang ${Math.floor(i / capacity) + 1}`, seatData });
       }
@@ -93,13 +108,6 @@ export default function App() {
         <div className="flex flex-wrap justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 gap-4">
             <h1 className="text-xl font-bold text-blue-900 flex items-center gap-2"><LayoutGrid /> Exam Seat Planner</h1>
             <div className="flex flex-wrap gap-2">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileUpload} 
-                  className="hidden" 
-                  accept=".xlsx, .xls"
-                />
                 <button onClick={handleReset} className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md text-sm hover:bg-red-700"><Trash2 size={16}/> Reset Data</button>
                 <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md text-sm hover:bg-green-700"><Upload size={16}/> Import Excel</button>
                 <button onClick={() => window.print()} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"><Printer size={16} /> Cetak Semua</button>
@@ -107,6 +115,7 @@ export default function App() {
         </div>
       </header>
 
+      {/* Main Content - Full width on screen, constrained on print */}
       <div className="w-full flex flex-col items-center">
         {rooms.map((room, roomIdx) => (
             <main key={roomIdx} className="w-full print:max-w-[210mm] print:mx-auto bg-white p-8 shadow-md border-4 border-gray-900 mb-12 page-break">
@@ -124,7 +133,7 @@ export default function App() {
                             <input value={room.seatData[`-1-${c}`]?.id || ''} onChange={(e) => handleManualChange(roomIdx, -1, c, 'id', e.target.value)} className="w-full bg-transparent text-[8px] text-center outline-none font-bold underline"/>
                             <textarea value={room.seatData[`-1-${c}`]?.name || ''} onChange={(e) => handleManualChange(roomIdx, -1, c, 'name', e.target.value)} className="w-full h-12 bg-transparent text-[8px] text-center outline-none resize-none"/>
                         </div>
-                      ) : <div key={`extra-${c}`} className="h-20" />
+                      ) : <div key={`extra-${c}`} className="h-20"/>
                    ))}
 
                    {Array.from({length: rows}).map((_, r) => (
@@ -147,11 +156,21 @@ export default function App() {
 
                 <div className="w-full mt-12 pt-4 relative">
                     <div className={`absolute -top-6 w-full flex ${doorPos === 'left' ? 'justify-start' : 'justify-end'}`}>
+                        <div className="bg-white px-2 text-xs font-bold border-2 border-gray-900 rounded flex items-center gap-1"><DoorOpen size={14}/> Pintu</div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <div className={`w-full flex ${teacherDeskPos === 'left' ? 'justify-start' : teacherDeskPos === 'right' ? 'justify-end' : 'justify-center'} mb-4`}>
+                            <div className="bg-white px-8 py-4 border-2 border-gray-900 rounded text-xs font-bold text-center">Meja Pengawas</div>
+                        </div>
+                        <div className="w-full bg-gray-900 text-white py-2 rounded text-center text-xs font-bold tracking-widest uppercase">Papan Tulis</div>
                     </div>
                 </div>
             </main>
         ))}
       </div>
-    </div>
-  );
-}
+
+      {/* Settings Panel */}
+      <div className="w-full p-6 bg-white border rounded-lg shadow-sm no-print mb-8">
+        <label className="text-sm font-bold block mb-4 border-b pb-2">Konfigurasi Ruangan</label>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col gap-2">
